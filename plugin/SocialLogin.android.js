@@ -43,36 +43,37 @@ var _isGoogleRequestAuthCode;
 
 var actionRunnable = java.lang.Runnable.extend({
     action: undefined,
-    
+
     run: function() {
         this.action();
     }
 });
 
 function logMsg(msg, tag) {
-    try {
-        var loggers = _getLoggers();
-
-        for (var i = 0; i < loggers.length; i++) {
-            try {
-                var l = loggers[i];
-                l(msg, tag);
-            }
-            catch (e) {
-                console.log("[ERROR] nativescript-social-login >> logMsg() >> logger[" + i + "]: " + e);
-            }
-        }
-    }
-    catch (e) {
-        console.log("[ERROR] nativescript-social-login >> logMsg(): " + e);
-    }
+    console.log(msg);
+    // try {
+    //     var loggers = _getLoggers();
+    //
+    //     for (var i = 0; i < loggers.length; i++) {
+    //         try {
+    //             var l = loggers[i];
+    //             l(msg, tag);
+    //         }
+    //         catch (e) {
+    //             console.log("[ERROR] nativescript-social-login >> logMsg() >> logger[" + i + "]: " + e);
+    //         }
+    //     }
+    // }
+    // catch (e) {
+    //     console.log("[ERROR] nativescript-social-login >> logMsg(): " + e);
+    // }
 }
 
 function logResult(resultCtx, tag) {
     for (var p in resultCtx) {
         if (resultCtx.hasOwnProperty(p)) {
             logMsg('result.' + p + ' = ' + resultCtx[p],
-                   tag);
+                tag);
         }
     }
 }
@@ -144,11 +145,11 @@ function initEnvironment(cfg,
     _rcGoogleSignIn = 597965301;
     _rcFacebookSignIn = 64206;
 
-    var googleClientOptions;    
+    var googleClientOptions;
 
     _activity = cfg.activity ||
-                Application.android.foregroundActivity ||
-                Application.android.startActivity;
+        Application.android.foregroundActivity ||
+        Application.android.startActivity;
 
     logMsg('activity: ' + _activity, LOGTAG_INIT_ENV);
 
@@ -156,7 +157,7 @@ function initEnvironment(cfg,
     if (TypeUtils.isNullOrUndefined(_googleServerClientId)) {
         if (!TypeUtils.isNullOrUndefined(cfg.googleServerClientId)) {
             _googleServerClientId = cfg.googleServerClientId;
-        }    
+        }
     }
 
     // Google
@@ -171,19 +172,23 @@ function initEnvironment(cfg,
             result.google.error = e;
         }
     }
-
+    console.log("initialize facebook")
+    console.log(initializeFacebook)
     // Facebook
     if (initializeFacebook) {
         result.facebook.isInitialized = false;
+        console.log("initialize facebook")
         try {
+            console.log("################# FB SDK")
+            console.log(_activity.getApplication());
             com.facebook.FacebookSdk.sdkInitialize(_activity.getApplicationContext());
-            com.facebook.appevents.AppEventsLogger.activateApp(_activity);
+            com.facebook.appevents.AppEventsLogger.activateApp(_activity.getApplication());
 
             var fbCallbackManager = com.facebook.CallbackManager.Factory.create();
 
             var fbLoginManager = com.facebook.login.LoginManager.getInstance();
             fbLoginManager.logOut();
-
+            console.log(JSON.stringify(fbLoginManager));
             _fbCallbackManager = fbCallbackManager;
             _fbLoginManager = fbLoginManager;
 
@@ -191,13 +196,13 @@ function initEnvironment(cfg,
                 resultCtx.provider = 'facebook';
 
                 logResult(resultCtx, LOGTAG_FB_LOGIN_MGR);
-                
+
                 var cb = _loginCallback;
                 if (cb) {
                     cb(resultCtx);
                 }
             };
-            
+
             _fbLoginManager.registerCallback(_fbCallbackManager, new com.facebook.FacebookCallback({
                 onSuccess: function (loginResult) {
                     logMsg('onSuccess()', LOGTAG_FB_LOGIN_MGR);
@@ -223,7 +228,7 @@ function initEnvironment(cfg,
                                         if (obj.has("id")) {
                                             id = obj.getString("id");
                                         }
-                                        
+
                                         // email
                                         if (obj.has("email")) {
                                             usrToken = obj.getString("email");
@@ -277,7 +282,7 @@ function initEnvironment(cfg,
                         });
                     }
                 },
-                
+
                 onCancel: function () {
                     logMsg('onCancel()', LOGTAG_FB_LOGIN_MGR);
 
@@ -285,7 +290,7 @@ function initEnvironment(cfg,
                         code: 1
                     });
                 },
-                
+
                 onError: function (e) {
                     logMsg('onError()', LOGTAG_FB_LOGIN_MGR);
 
@@ -294,9 +299,9 @@ function initEnvironment(cfg,
                         error: e.getMessage(),
                     });
                 }
-            }));          
+            }));
 
-            result.facebook.isInitialized = true;  
+            result.facebook.isInitialized = true;
         }
         catch (e) {
             logMsg('[ERROR] init.facebook: ' + e, LOGTAG_INIT_ENV);
@@ -307,27 +312,27 @@ function initEnvironment(cfg,
 
     // TODO
     /*
-    if (!TypeUtils.isNullOrUndefined(_twitterKey) &&
-        !TypeUtils.isNullOrUndefined(_twitterSecret)) {
-        
-        result.twitter.isInitialized = false;
-        try {
-	        var twitterAuthCfg = new com.twitter.sdk.android.core.TwitterAuthConfig(
-                _twitterKey,
-                _twitterSecret);
-        
-            io.fabric.sdk.android.Fabric.with(
-                _activity,
-                new com.twitter.sdk.android.core.TwitterCore(twitterAuthCfg));
+     if (!TypeUtils.isNullOrUndefined(_twitterKey) &&
+     !TypeUtils.isNullOrUndefined(_twitterSecret)) {
 
-            result.twitter.isInitialized = true;
-        }
-        catch (e) {
-            logMsg('[ERROR] init.twitter: ' + e, LOGTAG_INIT_ENV);
+     result.twitter.isInitialized = false;
+     try {
+     var twitterAuthCfg = new com.twitter.sdk.android.core.TwitterAuthConfig(
+     _twitterKey,
+     _twitterSecret);
 
-            result.twitter.error = e;
-        }
-    }*/
+     io.fabric.sdk.android.Fabric.with(
+     _activity,
+     new com.twitter.sdk.android.core.TwitterCore(twitterAuthCfg));
+
+     result.twitter.isInitialized = true;
+     }
+     catch (e) {
+     logMsg('[ERROR] init.twitter: ' + e, LOGTAG_INIT_ENV);
+
+     result.twitter.error = e;
+     }
+     }*/
 
     if (!TypeUtils.isNullOrUndefined(_activity)) {
         _activity.onActivityResult = (requestCode, resultCode, data) => {
@@ -347,7 +352,7 @@ function initEnvironment(cfg,
                         var signInResult = com.google.android.gms.auth.api.Auth.GoogleSignInApi.getSignInResultFromIntent(data);
                         if (signInResult.isSuccess()) {
                             logMsg('Success', LOGTAG_ON_ACTIVITY_RESULT);
-                            
+
                             resultCtx.code = 0;
 
                             var account = signInResult.getSignInAccount();
@@ -362,10 +367,10 @@ function initEnvironment(cfg,
                                 resultCtx.photo = photoUrl;
                             }
 
-                            resultCtx.authToken = account.getIdToken(); 
+                            resultCtx.authToken = account.getIdToken();
                             resultCtx.authCode = account.getServerAuthCode();
                             resultCtx.userToken = account.getEmail();
-                            resultCtx.displayName = account.getDisplayName();      
+                            resultCtx.displayName = account.getDisplayName();
                         }
                         else {
                             logMsg('NO SUCCESS!', LOGTAG_ON_ACTIVITY_RESULT);
@@ -383,9 +388,9 @@ function initEnvironment(cfg,
                 }
                 else if (requestCode == _rcFacebookSignIn) {
                     _fbCallbackManager.onActivityResult(requestCode, resultCode, data);
-                
+
                     activityResultHandled = true;
-                    cb = null;    
+                    cb = null;
                 }
             }
             catch (e) {
@@ -412,7 +417,7 @@ function initEnvironment(cfg,
     logMsg('google.isInitialized: ' + result.google.isInitialized, LOGTAG_INIT_ENV);
     logMsg('facebook.isInitialized: ' + result.facebook.isInitialized, LOGTAG_INIT_ENV);
     logMsg('twitter.isInitialized: ' + result.twitter.isInitialized, LOGTAG_INIT_ENV);
-    
+
     return result;
 }
 exports.initEnvironment = initEnvironment;
@@ -425,7 +430,7 @@ function loginWithFacebook(callback) {
         uiAction.action = () => {
             try {
                 _fbLoginManager.logInWithReadPermissions(_activity,
-                                                         java.util.Arrays.asList(["public_profile", "email"]));
+                    java.util.Arrays.asList(["public_profile", "email"]));
             }
             catch (e) {
                 logMsg('[ERROR] runOnUiThread(): ' + e, LOGTAG_LOGIN_WITH_FB);
@@ -436,10 +441,10 @@ function loginWithFacebook(callback) {
         _activity.runOnUiThread(uiAction);
     }
     catch (e) {
-        logMsg('[ERROR] ' + e, LOGTAG_LOGIN_WITH_FB);
+        logMsg('[ERROR] d' + e, LOGTAG_LOGIN_WITH_FB);
 
-        throw e;    
-    }     
+        throw e;
+    }
 }
 
 function loginWithGoogle(callback) {
@@ -449,20 +454,20 @@ function loginWithGoogle(callback) {
             .requestProfile();
 
         if (!TypeUtils.isNullOrUndefined(_googleServerClientId)) {
-            
+
 
             if (!_isGoogleRequestAuthCode){
-                logMsg('Will request ID token', LOGTAG_LOGIN_WITH_GOOGLE);                
+                logMsg('Will request ID token', LOGTAG_LOGIN_WITH_GOOGLE);
                 optionBuilder = optionBuilder.requestIdToken(_googleServerClientId);
             }
-            else {    
+            else {
                 logMsg('Will request server auth code', LOGTAG_LOGIN_WITH_GOOGLE);
                 optionBuilder = optionBuilder.requestServerAuthCode(_googleServerClientId, false);
             }
         }
 
         var options = optionBuilder.build();
-            
+
         var client = new com.google.android.gms.common.api.GoogleApiClient.Builder(_activity.getApplicationContext())
             .addApi(com.google.android.gms.auth.api.Auth.GOOGLE_SIGN_IN_API, options)
             .build();
@@ -487,14 +492,14 @@ function loginWithGoogle(callback) {
     catch (e) {
         logMsg('[ERROR] ' + e, LOGTAG_LOGIN_WITH_GOOGLE);
 
-        throw e;    
-    }     
+        throw e;
+    }
 }
 
 // CURRENTLY NOT WORKING!
 function loginWithTwitter(callback) {
     _loginCallback = callback;
-    
+
     try {
         var invokeForTwitterResult = function(resultCtx) {
             resultCtx.provider = 'twitter';
@@ -546,7 +551,7 @@ function loginWithProvider(provider, callback) {
     if (TypeUtils.isNullOrUndefined(provider)) {
         provider = '';
     }
-    
+
     provider = ('' + provider).toLowerCase().trim();
 
     logMsg("Provider: " + provider);
@@ -557,7 +562,7 @@ function loginWithProvider(provider, callback) {
             logMsg("Will use Google sign in...");
             loginWithGoogle(callback);
             break;
-        
+
         case "facebook":
         case "fb":
             logMsg("Will use Facebook SDK...");
@@ -566,8 +571,8 @@ function loginWithProvider(provider, callback) {
 
         // TODO
         /* case "twitter":
-            loginWithTwitter(callback);
-            break; */
+         loginWithTwitter(callback);
+         break; */
 
         default:
             throw "Provider '" + provider + "' is NOT supported!";
